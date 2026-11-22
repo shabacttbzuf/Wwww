@@ -23,16 +23,25 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseClient() {
-  const url = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  const url =
+    import.meta.env.VITE_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    (typeof window !== "undefined" ? localStorage.getItem("supabase_url") : null);
+  const key =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    (typeof window !== "undefined" ? localStorage.getItem("supabase_key") : null);
 
   if (!url || !key) {
-    const missing = [
-      ...(!url ? ["VITE_SUPABASE_URL (or SUPABASE_URL for SSR)"] : []),
-      ...(!key ? ["VITE_SUPABASE_PUBLISHABLE_KEY (or SUPABASE_PUBLISHABLE_KEY for SSR)"] : []),
-    ];
-    throw new Error(
-      `Supabase configuration is incomplete. Set: ${missing.join(", ")}. See .env.example.`,
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("supabase-config-needed"));
+    }
+    return createClient<Database>(
+      "https://placeholder.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder",
+      {
+        auth: { persistSession: false },
+      },
     );
   }
 

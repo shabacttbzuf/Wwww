@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { SupabaseSetupDialog } from "@/components/supabase-setup-dialog";
 
 function NotFoundComponent() {
   return (
@@ -153,6 +154,7 @@ function RootComponent() {
       <ThemeProvider>
         <Outlet />
         <Toaster position="top-center" richColors />
+        <SupabaseSetupDialog />
       </ThemeProvider>
     </QueryClientProvider>
   );
