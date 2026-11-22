@@ -1,0 +1,509 @@
+import { Fragment, useMemo } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { useActiveTenant } from "@/hooks/use-active-tenant";
+import { useSuperOwner } from "@/hooks/use-super-owner";
+import { setUserPermission } from "@/lib/demo-data.functions";
+import { PageHeader } from "@/components/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, ShieldAlert, Eye, Lock, Search } from "lucide-react";
+import { toast } from "sonner";
+import { useState } from "react";
+
+export const Route = createFileRoute("/_authenticated/team-permissions")({
+  component: TeamPermissionsPage,
+});
+
+const CATEGORY_LABELS: Record<string, string> = {
+  branches: "الفروع",
+  users: "المستخدمون",
+  catalog: "الكتالوج",
+  dashboard: "لوحة التحكم",
+  payroll: "الرواتب",
+  sales: "المبيعات",
+  inventory: "المخزون",
+  crm: "العملاء",
+  finance: "المالية",
+  reports: "التقارير",
+  system: "النظام",
+  operations: "العمليات",
+};
+
+function TeamPermissionsPage() {
+  const { tenantId, userId, role, loading: tLoading } = useActiveTenant();
+  const { isSuperOwner } = useSuperOwner();
+  const qc = useQueryClient();
+  const setPerm = useServerFn(setUserPermission);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [permissionSearch, setPermissionSearch] = useState("");
+
+  const isOwner = role === "owner";
+  const isManager = role === "manager";
+  const canAccess = isOwner || isManager || isSuperOwner;
+
+  const team = useQuery({
+    queryKey: ["team-list", tenantId, userId, role, isSuperOwner],
+    queryFn: async () => {
+      if (!tenantId || !userId)
+        return [] as Array<{
+          user_id: string;
+          role: string;
+          branch_id: string | null;
+          custom_role_id: string | null;
+          custom_role_name: string | null;
+          hired_by: string | null;
+          full_name: string | null;
+        }>;
+      const { data: rolesRows, error } = await supabase
+        .from("user_roles")
+        .select("user_id, role, branch_id, custom_role_id, hired_by")
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      const ids = Array.from(new Set((rolesRows ?? []).map((r) => r.user_id)));
+      const { data: profiles } = ids.length
+        ? await supabase.from("profiles").select("id, full_name").in("id", ids)
+        : { data: [] as { id: string; full_name: string | null }[] };
+      const customIds = Array.from(
+        new Set((rolesRows ?? []).map((r) => r.custom_role_id).filter(Boolean)),
+      ) as string[];
+      const { data: customRows, error: customError } = customIds.length
+        ? await supabase
+            .from("custom_roles")
+            .select("id, name")
+            .eq("tenant_id", tenantId!)
+            .in("id", customIds)
+        : { data: [], error: null };
+      if (customError) throw customError;
+      const pmap = new Map((profiles ?? []).map((p) => [p.id, p.full_name] as const));
+      const cmap = new Map((customRows ?? []).map((r) => [r.id, r.name] as const));
+      return (rolesRows ?? []).map((r) => ({
+        ...r,
+        full_name: pmap.get(r.user_id) ?? null,
+        custom_role_name: r.custom_role_id ? (cmap.get(r.custom_role_id) ?? "دور مخصص") : null,
+      }));
+    },
+    enabled: !!tenantId && !!userId && canAccess,
+  });
+
+  const permissions = useQuery({
+    queryKey: ["perm-catalog"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("permissions")
+        .select("key, label_ar, category")
+        .order("category")
+        .order("key");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: canAccess,
+  });
+
+  const overrides = useQuery({
+    queryKey: ["upo", tenantId, selectedUser],
+    queryFn: async () => {
+      if (!tenantId || !selectedUser) return [] as { permission_key: string; granted: boolean }[];
+      const { data, error } = await supabase
+        .from("user_permission_overrides")
+        .select("permission_key, granted")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", selectedUser);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!selectedUser && !!tenantId,
+  });
+
+  const defaultPerms = useQuery({
+    queryKey: ["default-role-perms"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("role_permissions")
+        .select("builtin_role, permission_key")
+        .is("tenant_id", null)
+        .eq("role_kind", "builtin");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: canAccess,
+  });
+
+  const filteredTeam = useMemo(() => {
+    const list = team.data ?? [];
+    if (isSuperOwner || isOwner) return list.filter((r) => r.user_id !== userId);
+    if (isManager) return list.filter((r) => r.hired_by === userId);
+    return [];
+  }, [team.data, isOwner, isManager, isSuperOwner, userId]);
+  const visibleTeam = useMemo(() => {
+    const term = teamSearch.trim().toLowerCase();
+    if (!term) return filteredTeam;
+    return filteredTeam.filter(
+      (member) =>
+        (member.full_name ?? "").toLowerCase().includes(term) ||
+        member.role.toLowerCase().includes(term) ||
+        (member.custom_role_name ?? "").toLowerCase().includes(term) ||
+        member.user_id.toLowerCase().includes(term),
+    );
+  }, [filteredTeam, teamSearch]);
+
+  const grouped = useMemo(() => {
+    const g = new Map<
+      string,
+      typeof permissions.data extends undefined ? never : NonNullable<typeof permissions.data>
+    >();
+    const term = permissionSearch.trim().toLowerCase();
+    for (const p of permissions.data ?? []) {
+      if (term && !p.label_ar.toLowerCase().includes(term) && !p.key.toLowerCase().includes(term))
+        continue;
+      const arr = g.get(p.category) ?? [];
+      arr.push(p);
+      g.set(p.category, arr as never);
+    }
+    return Array.from(g.entries());
+  }, [permissions.data, permissionSearch]);
+
+  const selectedTeamMember = filteredTeam.find((r) => r.user_id === selectedUser) ?? null;
+
+  const customRoleDefaults = useQuery({
+    queryKey: ["custom-role-default-perms", tenantId, selectedTeamMember?.custom_role_id],
+    queryFn: async () => {
+      if (!selectedTeamMember?.custom_role_id) return [] as string[];
+      const { data, error } = await supabase
+        .from("role_permissions")
+        .select("permission_key")
+        .eq("tenant_id", tenantId!)
+        .eq("custom_role_id", selectedTeamMember.custom_role_id)
+        .eq("role_kind", "custom");
+      if (error) throw error;
+      return (data ?? []).map((row) => row.permission_key);
+    },
+    enabled: !!tenantId && !!selectedTeamMember?.custom_role_id,
+  });
+
+  // Owner may only VIEW (not edit) permissions of users the OTHER MANAGERS hired.
+  const canEditSelected = useMemo(() => {
+    if (!selectedTeamMember) return false;
+    if (isSuperOwner) return true;
+    if (isManager) return selectedTeamMember.hired_by === userId;
+    if (isOwner) {
+      // owner can edit managers and users they hired themselves; view-only otherwise
+      if (selectedTeamMember.role === "manager") return true;
+      if (selectedTeamMember.hired_by === userId) return true;
+      return false;
+    }
+    return false;
+  }, [selectedTeamMember, isOwner, isManager, isSuperOwner, userId]);
+
+  const overrideMap = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const o of overrides.data ?? []) m.set(o.permission_key, o.granted);
+    return m;
+  }, [overrides.data]);
+
+  const defaultsFor = (role: string) =>
+    new Set(
+      (defaultPerms.data ?? []).filter((d) => d.builtin_role === role).map((d) => d.permission_key),
+    );
+
+  const setMut = useMutation({
+    mutationFn: (v: { permission_key: string; granted: boolean | null }) =>
+      setPerm({
+        data: {
+          tenant_id: tenantId!,
+          user_id: selectedUser!,
+          permission_key: v.permission_key,
+          granted: v.granted,
+        },
+      }),
+    onMutate: async (v) => {
+      const queryKey = ["upo", tenantId, selectedUser] as const;
+      await qc.cancelQueries({ queryKey });
+      const previous =
+        qc.getQueryData<Array<{ permission_key: string; granted: boolean }>>(queryKey);
+      qc.setQueryData<Array<{ permission_key: string; granted: boolean }>>(
+        queryKey,
+        (current = []) => {
+          const next = current.filter((item) => item.permission_key !== v.permission_key);
+          return v.granted === null
+            ? next
+            : [...next, { permission_key: v.permission_key, granted: v.granted }];
+        },
+      );
+      return { queryKey, previous };
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previous) qc.setQueryData(context.queryKey, context.previous);
+      toast.error(error.message);
+    },
+    onSettled: (_data, _error, _variables, context) => {
+      if (context) qc.invalidateQueries({ queryKey: context.queryKey });
+    },
+  });
+
+  const bulkSet = useMutation({
+    mutationFn: async (input: { keys: string[]; granted: boolean }) => {
+      if (!selectedUser || !tenantId) throw new Error("اختر موظفاً أولاً");
+      const results = await Promise.allSettled(
+        input.keys.map((permission_key) =>
+          setPerm({
+            data: {
+              tenant_id: tenantId,
+              user_id: selectedUser,
+              permission_key,
+              granted: input.granted,
+            },
+          }),
+        ),
+      );
+      const failed = results.filter((result) => result.status === "rejected");
+      if (failed.length)
+        throw new Error(
+          "تعذر حفظ " + failed.length + " صلاحية من المجموعة. أعد المزامنة للتحقق من النتائج.",
+        );
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["upo", tenantId, selectedUser] });
+      toast.success("تم تحديث صلاحيات المجموعة");
+    },
+    onError: (error: Error) => {
+      void qc.invalidateQueries({ queryKey: ["upo", tenantId, selectedUser] });
+      toast.error(error.message);
+    },
+  });
+
+  if (tLoading)
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+
+  if (!canAccess) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="صلاحيات الفريق" />
+        <Card>
+          <CardContent className="flex items-center gap-3 p-8 text-muted-foreground">
+            <ShieldAlert className="h-5 w-5 text-destructive" />
+            هذه الصفحة متاحة للمالك أو المدير فقط.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const subtitle = isSuperOwner
+    ? "كل الأدوار عبر كل المطاعم"
+    : isOwner
+      ? "تحكّم بصلاحيات المديرين ومن وظّفتهم بنفسك، وشاهد صلاحيات فريق المديرين"
+      : "تحكّم بصلاحيات الموظفين الذين وظّفتهم أنت في فرعك";
+
+  const roleDefaults = selectedTeamMember
+    ? selectedTeamMember.custom_role_id
+      ? new Set(customRoleDefaults.data ?? [])
+      : defaultsFor(selectedTeamMember.role)
+    : new Set<string>();
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="صلاحيات الفريق" subtitle={subtitle} />
+
+      <Card>
+        <CardContent className="grid gap-4 p-4 md:grid-cols-[280px_1fr]">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-muted-foreground">
+              اختر موظفاً ({visibleTeam.length})
+            </div>
+            <div className="relative">
+              <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                className="h-9 w-full rounded-md border bg-background pr-9 pl-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                placeholder="ابحث بالاسم أو الدور..."
+                value={teamSearch}
+                onChange={(e) => setTeamSearch(e.target.value)}
+              />
+            </div>
+            <Select value={selectedUser ?? ""} onValueChange={(v) => setSelectedUser(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="—" />
+              </SelectTrigger>
+              <SelectContent>
+                {visibleTeam.map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    <span className="flex items-center gap-2">
+                      <span>{m.full_name ?? m.user_id.slice(0, 8)}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {m.custom_role_name ?? m.role}
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {visibleTeam.length === 0 && (
+              <p className="text-xs text-muted-foreground">لا يوجد موظفون تحت إدارتك بعد.</p>
+            )}
+            {selectedTeamMember && (
+              <div className="rounded-md border p-3 text-xs">
+                <div>
+                  <span className="text-muted-foreground">الدور: </span>
+                  {selectedTeamMember.custom_role_name ?? selectedTeamMember.role}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">وظّفه: </span>
+                  {selectedTeamMember.hired_by === userId
+                    ? "أنت"
+                    : (team.data?.find((t) => t.user_id === selectedTeamMember.hired_by)
+                        ?.full_name ?? "—")}
+                </div>
+                <div className="mt-2 flex items-center gap-1 text-[10px]">
+                  {canEditSelected ? (
+                    <>
+                      <span className="text-success">تحرير مسموح</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3 w-3 text-muted-foreground" />{" "}
+                      <span className="text-muted-foreground">عرض فقط</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            {!selectedUser ? (
+              <div className="grid h-40 place-items-center text-sm text-muted-foreground">
+                اختر موظفاً لعرض صلاحياته
+              </div>
+            ) : permissions.isLoading ||
+              overrides.isLoading ||
+              (selectedTeamMember?.custom_role_id && customRoleDefaults.isLoading) ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground">
+                    الصلاحيات الفعّالة:{" "}
+                    {permissions.data?.filter((p) => {
+                      const override = overrideMap.get(p.key);
+                      return override === undefined ? roleDefaults.has(p.key) : override;
+                    }).length ?? 0}{" "}
+                    من {permissions.data?.length ?? 0} · المخصّصة: {overrideMap.size}
+                  </div>
+                  <div className="relative w-full max-w-sm">
+                    <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <input
+                      className="h-9 w-full rounded-md border bg-background pr-9 pl-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder="ابحث عن صلاحية..."
+                      value={permissionSearch}
+                      onChange={(e) => setPermissionSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {grouped.map(([cat, perms]) => (
+                  <div key={cat}>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-muted-foreground">
+                        {CATEGORY_LABELS[cat] ?? cat} ({perms.length})
+                      </div>
+                      {canEditSelected && (
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            className="text-[10px] text-primary underline disabled:opacity-50"
+                            disabled={bulkSet.isPending || setMut.isPending}
+                            onClick={() =>
+                              bulkSet.mutate({ keys: perms.map((p) => p.key), granted: true })
+                            }
+                          >
+                            تفعيل المجموعة
+                          </button>
+                          <button
+                            type="button"
+                            className="text-[10px] text-destructive underline disabled:opacity-50"
+                            disabled={bulkSet.isPending || setMut.isPending}
+                            onClick={() =>
+                              bulkSet.mutate({ keys: perms.map((p) => p.key), granted: false })
+                            }
+                          >
+                            إيقاف المجموعة
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(perms as Array<{ key: string; label_ar: string }>).map((p) => {
+                        const isOverride = overrideMap.has(p.key);
+                        const defaultOn = roleDefaults.has(p.key);
+                        const effective = isOverride ? overrideMap.get(p.key)! : defaultOn;
+                        return (
+                          <label
+                            key={p.key}
+                            className={`flex items-center justify-between gap-2 rounded-md border p-2 text-sm ${!canEditSelected ? "opacity-70" : ""}`}
+                          >
+                            <div className="flex-1">
+                              <div>{p.label_ar}</div>
+                              <div className="text-[10px] text-muted-foreground" dir="ltr">
+                                {p.key}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isOverride ? (
+                                <Badge variant="secondary" className="text-[9px]">
+                                  تجاوز مخصص
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[9px]">
+                                  موروث من الدور
+                                </Badge>
+                              )}
+                              {!canEditSelected && (
+                                <Lock className="h-3 w-3 text-muted-foreground" />
+                              )}
+                              <Checkbox
+                                checked={effective}
+                                disabled={!canEditSelected}
+                                onCheckedChange={(v) => {
+                                  const next = !!v;
+                                  // if flipping to default, clear override; otherwise set explicit
+                                  if (next === defaultOn) {
+                                    setMut.mutate({ permission_key: p.key, granted: null });
+                                  } else {
+                                    setMut.mutate({ permission_key: p.key, granted: next });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+// prevent unused-var warning if imports go unused in some branches
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _keep = Fragment;

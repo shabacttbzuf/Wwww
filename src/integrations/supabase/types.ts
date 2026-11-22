@@ -1,0 +1,3148 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18";
+  };
+  public: {
+    Tables: {
+      marketing_campaigns: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          company_id: string | null;
+          description: string;
+          ends_at: string | null;
+          id: string;
+          image_url: string | null;
+          placement: string;
+          sort_order: number;
+          starts_at: string | null;
+          status: string;
+          target_url: string | null;
+          tenant_id: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          company_id?: string | null;
+          description?: string;
+          ends_at?: string | null;
+          id?: string;
+          image_url?: string | null;
+          placement?: string;
+          sort_order?: number;
+          starts_at?: string | null;
+          status?: string;
+          target_url?: string | null;
+          tenant_id: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          company_id?: string | null;
+          description?: string;
+          ends_at?: string | null;
+          id?: string;
+          image_url?: string | null;
+          placement?: string;
+          sort_order?: number;
+          starts_at?: string | null;
+          status?: string;
+          target_url?: string | null;
+          tenant_id?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "marketing_campaigns_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      attendance: {
+        Row: {
+          biometric_ref: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          created_at: string;
+          date: string;
+          device_id: string | null;
+          early_leave_minutes: number | null;
+          employee_id: string;
+          hours_worked: number;
+          id: string;
+          is_late: boolean;
+          late_minutes: number | null;
+          notes: string | null;
+          overtime_hours: number | null;
+          source: string | null;
+          status: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          biometric_ref?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          created_at?: string;
+          date: string;
+          device_id?: string | null;
+          early_leave_minutes?: number | null;
+          employee_id: string;
+          hours_worked?: number;
+          id?: string;
+          is_late?: boolean;
+          late_minutes?: number | null;
+          notes?: string | null;
+          overtime_hours?: number | null;
+          source?: string | null;
+          status?: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          biometric_ref?: string | null;
+          check_in?: string | null;
+          check_out?: string | null;
+          created_at?: string;
+          date?: string;
+          device_id?: string | null;
+          early_leave_minutes?: number | null;
+          employee_id?: string;
+          hours_worked?: number;
+          id?: string;
+          is_late?: boolean;
+          late_minutes?: number | null;
+          notes?: string | null;
+          overtime_hours?: number | null;
+          source?: string | null;
+          status?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "attendance_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      audit_logs: {
+        Row: {
+          action: string;
+          changes: Json | null;
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          id: string;
+          tenant_id: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          action: string;
+          changes?: Json | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type: string;
+          id?: string;
+          tenant_id?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          action?: string;
+          changes?: Json | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: string;
+          tenant_id?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      bonuses: {
+        Row: {
+          amount: number;
+          applied_date: string;
+          bonus_type: string;
+          created_at: string;
+          created_by: string | null;
+          employee_id: string;
+          id: string;
+          payroll_item_id: string | null;
+          reason: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          amount: number;
+          applied_date?: string;
+          bonus_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          employee_id: string;
+          id?: string;
+          payroll_item_id?: string | null;
+          reason?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          applied_date?: string;
+          bonus_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          employee_id?: string;
+          id?: string;
+          payroll_item_id?: string | null;
+          reason?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bonuses_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bonuses_payroll_item_fk";
+            columns: ["payroll_item_id"];
+            isOneToOne: false;
+            referencedRelation: "payroll_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bonuses_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      branches: {
+        Row: {
+          company_id: string | null;
+          address: string | null;
+          created_at: string;
+          currency: string;
+          description: string | null;
+          id: string;
+          image_url: string | null;
+          is_active: boolean;
+          logo_url: string | null;
+          manager_id: string | null;
+          name: string;
+          phone: string | null;
+          photo_url: string | null;
+          status: string;
+          tax_number: string | null;
+          tenant_id: string;
+          updated_at: string;
+          working_hours: Json | null;
+        };
+        Insert: {
+          company_id?: string | null;
+          address?: string | null;
+          created_at?: string;
+          currency?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          logo_url?: string | null;
+          manager_id?: string | null;
+          name: string;
+          phone?: string | null;
+          photo_url?: string | null;
+          status?: string;
+          tax_number?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+          working_hours?: Json | null;
+        };
+        Update: {
+          company_id?: string | null;
+          address?: string | null;
+          created_at?: string;
+          currency?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          logo_url?: string | null;
+          manager_id?: string | null;
+          name?: string;
+          phone?: string | null;
+          photo_url?: string | null;
+          status?: string;
+          tax_number?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+          working_hours?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "branches_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "branches_manager_id_fkey";
+            columns: ["manager_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "branches_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cash_sessions: {
+        Row: {
+          branch_id: string;
+          cash_difference: number | null;
+          cashier_id: string;
+          closed_at: string | null;
+          closing_balance: number | null;
+          created_at: string;
+          expected_cash: number | null;
+          id: string;
+          notes: string | null;
+          opened_at: string;
+          opening_balance: number;
+          status: Database["public"]["Enums"]["cash_session_status"];
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          branch_id: string;
+          cash_difference?: number | null;
+          cashier_id: string;
+          closed_at?: string | null;
+          closing_balance?: number | null;
+          created_at?: string;
+          expected_cash?: number | null;
+          id?: string;
+          notes?: string | null;
+          opened_at?: string;
+          opening_balance?: number;
+          status?: Database["public"]["Enums"]["cash_session_status"];
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          branch_id?: string;
+          cash_difference?: number | null;
+          cashier_id?: string;
+          closed_at?: string | null;
+          closing_balance?: number | null;
+          created_at?: string;
+          expected_cash?: number | null;
+          id?: string;
+          notes?: string | null;
+          opened_at?: string;
+          opening_balance?: number;
+          status?: Database["public"]["Enums"]["cash_session_status"];
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cash_sessions_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cash_sessions_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      categories: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          icon: string | null;
+          id: string;
+          image_url: string | null;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categories_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      companies: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          legal_name: string | null;
+          logo_url: string | null;
+          name: string;
+          tax_number: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          legal_name?: string | null;
+          logo_url?: string | null;
+          name: string;
+          tax_number?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          legal_name?: string | null;
+          logo_url?: string | null;
+          name?: string;
+          tax_number?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "companies_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      custom_roles: {
+        Row: {
+          copied_from_builtin: Database["public"]["Enums"]["app_role"] | null;
+          copied_from_custom: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          name: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          copied_from_builtin?: Database["public"]["Enums"]["app_role"] | null;
+          copied_from_custom?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          name: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          copied_from_builtin?: Database["public"]["Enums"]["app_role"] | null;
+          copied_from_custom?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          name?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "custom_roles_copied_from_custom_fkey";
+            columns: ["copied_from_custom"];
+            isOneToOne: false;
+            referencedRelation: "custom_roles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "custom_roles_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      customers: {
+        Row: {
+          address: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          credit_limit: number;
+          email: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          notes: string | null;
+          phone: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          address?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          credit_limit?: number;
+          email?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          notes?: string | null;
+          phone?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          address?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          credit_limit?: number;
+          email?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          notes?: string | null;
+          phone?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customers_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      deductions: {
+        Row: {
+          amount: number;
+          applied_date: string;
+          created_at: string;
+          created_by: string | null;
+          deduction_type: string;
+          employee_id: string;
+          id: string;
+          payroll_item_id: string | null;
+          reason: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          amount: number;
+          applied_date?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deduction_type?: string;
+          employee_id: string;
+          id?: string;
+          payroll_item_id?: string | null;
+          reason?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          applied_date?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deduction_type?: string;
+          employee_id?: string;
+          id?: string;
+          payroll_item_id?: string | null;
+          reason?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deductions_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "deductions_payroll_item_fk";
+            columns: ["payroll_item_id"];
+            isOneToOne: false;
+            referencedRelation: "payroll_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "deductions_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      departments: {
+        Row: {
+          branch_id: string | null;
+          company_id: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          manager_id: string | null;
+          name: string;
+          photo_url: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          manager_id?: string | null;
+          name: string;
+          photo_url?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          manager_id?: string | null;
+          name?: string;
+          photo_url?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "departments_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "departments_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "departments_manager_id_fkey";
+            columns: ["manager_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "departments_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      employees: {
+        Row: {
+          avatar_url: string | null;
+          bank_account: string | null;
+          bank_name: string | null;
+          base_salary: number;
+          branch_id: string | null;
+          contract_type: string;
+          created_at: string;
+          created_by: string | null;
+          daily_salary: number | null;
+          department: string | null;
+          email: string | null;
+          emergency_contact: string | null;
+          employee_no: string | null;
+          full_name: string;
+          hire_date: string;
+          hourly_rate: number;
+          hourly_salary: number | null;
+          id: string;
+          job_title: string | null;
+          national_id: string | null;
+          notes: string | null;
+          phone: string | null;
+          salary_type: string | null;
+          status: string;
+          tenant_id: string;
+          termination_date: string | null;
+          updated_at: string;
+          user_id: string | null;
+          work_schedule: Json | null;
+          working_days_per_month: number | null;
+          working_hours_per_day: number | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          bank_account?: string | null;
+          bank_name?: string | null;
+          base_salary?: number;
+          branch_id?: string | null;
+          contract_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          daily_salary?: number | null;
+          department?: string | null;
+          email?: string | null;
+          emergency_contact?: string | null;
+          employee_no?: string | null;
+          full_name: string;
+          hire_date?: string;
+          hourly_rate?: number;
+          hourly_salary?: number | null;
+          id?: string;
+          job_title?: string | null;
+          national_id?: string | null;
+          notes?: string | null;
+          phone?: string | null;
+          salary_type?: string | null;
+          status?: string;
+          tenant_id: string;
+          termination_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          work_schedule?: Json | null;
+          working_days_per_month?: number | null;
+          working_hours_per_day?: number | null;
+        };
+        Update: {
+          avatar_url?: string | null;
+          bank_account?: string | null;
+          bank_name?: string | null;
+          base_salary?: number;
+          branch_id?: string | null;
+          contract_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          daily_salary?: number | null;
+          department?: string | null;
+          email?: string | null;
+          emergency_contact?: string | null;
+          employee_no?: string | null;
+          full_name?: string;
+          hire_date?: string;
+          hourly_rate?: number;
+          hourly_salary?: number | null;
+          id?: string;
+          job_title?: string | null;
+          national_id?: string | null;
+          notes?: string | null;
+          phone?: string | null;
+          salary_type?: string | null;
+          status?: string;
+          tenant_id?: string;
+          termination_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          work_schedule?: Json | null;
+          working_days_per_month?: number | null;
+          working_hours_per_day?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "employees_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "employees_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      employment_types: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "employment_types_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      expense_categories: {
+        Row: {
+          color: string | null;
+          created_at: string;
+          icon: string | null;
+          id: string;
+          name: string;
+          sort_order: number;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          color?: string | null;
+          created_at?: string;
+          icon?: string | null;
+          id?: string;
+          name: string;
+          sort_order?: number;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string | null;
+          created_at?: string;
+          icon?: string | null;
+          id?: string;
+          name?: string;
+          sort_order?: number;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      expenses: {
+        Row: {
+          amount: number;
+          attachment_url: string | null;
+          branch_id: string | null;
+          category_id: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          paid_at: string;
+          tenant_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          attachment_url?: string | null;
+          branch_id?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          paid_at?: string;
+          tenant_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          attachment_url?: string | null;
+          branch_id?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          paid_at?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "expenses_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "expense_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory: {
+        Row: {
+          branch_id: string;
+          id: string;
+          product_id: string;
+          quantity: number;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          branch_id: string;
+          id?: string;
+          product_id: string;
+          quantity?: number;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          branch_id?: string;
+          id?: string;
+          product_id?: string;
+          quantity?: number;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory_transactions: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          id: string;
+          product_id: string;
+          quantity: number;
+          reason: string | null;
+          reference_id: string | null;
+          reference_type: string | null;
+          tenant_id: string;
+          txn_type: Database["public"]["Enums"]["inventory_txn_type"];
+          user_id: string | null;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          quantity: number;
+          reason?: string | null;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          tenant_id: string;
+          txn_type: Database["public"]["Enums"]["inventory_txn_type"];
+          user_id?: string | null;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          quantity?: number;
+          reason?: string | null;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          tenant_id?: string;
+          txn_type?: Database["public"]["Enums"]["inventory_txn_type"];
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_transactions_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_transactions_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      job_titles: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "job_titles_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      leave_requests: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          created_at: string;
+          created_by: string | null;
+          days_count: number;
+          employee_id: string;
+          end_date: string;
+          id: string;
+          leave_type_id: string | null;
+          reason: string | null;
+          rejection_reason: string | null;
+          rejected_at: string | null;
+          rejected_by: string | null;
+          start_date: string;
+          status: string;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          days_count?: number;
+          employee_id: string;
+          end_date: string;
+          id?: string;
+          leave_type_id?: string | null;
+          reason?: string | null;
+          rejection_reason?: string | null;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          start_date: string;
+          status?: string;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          days_count?: number;
+          employee_id?: string;
+          end_date?: string;
+          id?: string;
+          leave_type_id?: string | null;
+          reason?: string | null;
+          rejection_reason?: string | null;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          start_date?: string;
+          status?: string;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leave_requests_leave_type_id_fkey";
+            columns: ["leave_type_id"];
+            isOneToOne: false;
+            referencedRelation: "leave_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leave_requests_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      leave_types: {
+        Row: {
+          color: string | null;
+          created_at: string;
+          days_per_year: number;
+          id: string;
+          is_active: boolean;
+          is_paid: boolean;
+          name: string;
+          requires_approval: boolean;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          color?: string | null;
+          created_at?: string;
+          days_per_year?: number;
+          id?: string;
+          is_active?: boolean;
+          is_paid?: boolean;
+          name: string;
+          requires_approval?: boolean;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string | null;
+          created_at?: string;
+          days_per_year?: number;
+          id?: string;
+          is_active?: boolean;
+          is_paid?: boolean;
+          name?: string;
+          requires_approval?: boolean;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leave_types_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      login_history: {
+        Row: {
+          browser: string | null;
+          device: string | null;
+          event: string;
+          id: string;
+          ip: string | null;
+          login_at: string;
+          logout_at: string | null;
+          os: string | null;
+          session_duration_seconds: number | null;
+          tenant_id: string | null;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          browser?: string | null;
+          device?: string | null;
+          event?: string;
+          id?: string;
+          ip?: string | null;
+          login_at?: string;
+          logout_at?: string | null;
+          os?: string | null;
+          session_duration_seconds?: number | null;
+          tenant_id?: string | null;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          browser?: string | null;
+          device?: string | null;
+          event?: string;
+          id?: string;
+          ip?: string | null;
+          login_at?: string;
+          logout_at?: string | null;
+          os?: string | null;
+          session_duration_seconds?: number | null;
+          tenant_id?: string | null;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "login_history_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notification_reads: {
+        Row: {
+          id: string;
+          notification_id: string;
+          read_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          notification_id: string;
+          read_at?: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          notification_id?: string;
+          read_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey";
+            columns: ["notification_id"];
+            isOneToOne: false;
+            referencedRelation: "notifications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          action_label: string | null;
+          action_path: string | null;
+          audience_id: string | null;
+          audience_type: string;
+          body: string | null;
+          created_at: string;
+          created_by: string | null;
+          company_id: string | null;
+          delivered_at: string | null;
+          id: string;
+          kind: string;
+          payload: Json;
+          read_at: string | null;
+          scheduled_for: string | null;
+          tenant_id: string | null;
+          title: string;
+          urgency: string;
+        };
+        Insert: {
+          action_label?: string | null;
+          action_path?: string | null;
+          audience_id?: string | null;
+          audience_type: string;
+          body?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          company_id?: string | null;
+          delivered_at?: string | null;
+          id?: string;
+          kind: string;
+          payload?: Json;
+          read_at?: string | null;
+          scheduled_for?: string | null;
+          tenant_id?: string | null;
+          title: string;
+          urgency?: string;
+        };
+        Update: {
+          action_label?: string | null;
+          action_path?: string | null;
+          audience_id?: string | null;
+          audience_type?: string;
+          body?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          company_id?: string | null;
+          delivered_at?: string | null;
+          id?: string;
+          kind?: string;
+          payload?: Json;
+          read_at?: string | null;
+          scheduled_for?: string | null;
+          tenant_id?: string | null;
+          title?: string;
+          urgency?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          method: Database["public"]["Enums"]["payment_method"];
+          reference: string | null;
+          sale_id: string;
+          tenant_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          id?: string;
+          method: Database["public"]["Enums"]["payment_method"];
+          reference?: string | null;
+          sale_id: string;
+          tenant_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          method?: Database["public"]["Enums"]["payment_method"];
+          reference?: string | null;
+          sale_id?: string;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payroll_items: {
+        Row: {
+          absence_deduction: number | null;
+          attendance_days: number | null;
+          base_salary: number;
+          bonuses_total: number;
+          created_at: string;
+          daily_rate: number | null;
+          deductions_total: number;
+          employee_id: string;
+          gross: number;
+          holidays_count: number | null;
+          hourly_rate: number | null;
+          id: string;
+          incentives_total: number | null;
+          late_deduction: number | null;
+          leave_days: number | null;
+          net: number;
+          notes: string | null;
+          overtime_amount: number;
+          overtime_hours: number | null;
+          payroll_run_id: string;
+          tenant_id: string;
+          updated_at: string;
+          working_hours: number | null;
+        };
+        Insert: {
+          absence_deduction?: number | null;
+          attendance_days?: number | null;
+          base_salary?: number;
+          bonuses_total?: number;
+          created_at?: string;
+          daily_rate?: number | null;
+          deductions_total?: number;
+          employee_id: string;
+          gross?: number;
+          holidays_count?: number | null;
+          hourly_rate?: number | null;
+          id?: string;
+          incentives_total?: number | null;
+          late_deduction?: number | null;
+          leave_days?: number | null;
+          net?: number;
+          notes?: string | null;
+          overtime_amount?: number;
+          overtime_hours?: number | null;
+          payroll_run_id: string;
+          tenant_id: string;
+          updated_at?: string;
+          working_hours?: number | null;
+        };
+        Update: {
+          absence_deduction?: number | null;
+          attendance_days?: number | null;
+          base_salary?: number;
+          bonuses_total?: number;
+          created_at?: string;
+          daily_rate?: number | null;
+          deductions_total?: number;
+          employee_id?: string;
+          gross?: number;
+          holidays_count?: number | null;
+          hourly_rate?: number | null;
+          id?: string;
+          incentives_total?: number | null;
+          late_deduction?: number | null;
+          leave_days?: number | null;
+          net?: number;
+          notes?: string | null;
+          overtime_amount?: number;
+          overtime_hours?: number | null;
+          payroll_run_id?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          working_hours?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payroll_items_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "employees";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payroll_items_payroll_run_id_fkey";
+            columns: ["payroll_run_id"];
+            isOneToOne: false;
+            referencedRelation: "payroll_runs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payroll_items_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payroll_runs: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          branch_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          notes: string | null;
+          paid_at: string | null;
+          period_month: number;
+          period_year: number;
+          rejected_at: string | null;
+          rejected_by: string | null;
+          rejection_reason: string | null;
+          status: string;
+          tenant_id: string;
+          total_bonuses: number;
+          total_deductions: number;
+          total_gross: number;
+          total_net: number;
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          branch_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          paid_at?: string | null;
+          period_month: number;
+          period_year: number;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          rejection_reason?: string | null;
+          status?: string;
+          tenant_id: string;
+          total_bonuses?: number;
+          total_deductions?: number;
+          total_gross?: number;
+          total_net?: number;
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          branch_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          paid_at?: string | null;
+          period_month?: number;
+          period_year?: number;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          rejection_reason?: string | null;
+          status?: string;
+          tenant_id?: string;
+          total_bonuses?: number;
+          total_deductions?: number;
+          total_gross?: number;
+          total_net?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payroll_runs_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      permissions: {
+        Row: {
+          category: string;
+          description: string | null;
+          key: string;
+          label_ar: string;
+          label_en: string;
+        };
+        Insert: {
+          category: string;
+          description?: string | null;
+          key: string;
+          label_ar: string;
+          label_en: string;
+        };
+        Update: {
+          category?: string;
+          description?: string | null;
+          key?: string;
+          label_ar?: string;
+          label_en?: string;
+        };
+        Relationships: [];
+      };
+      products: {
+        Row: {
+          addons: Json | null;
+          barcode: string | null;
+          category_id: string | null;
+          cost_price: number;
+          created_at: string;
+          description: string | null;
+          discount: number;
+          gallery_urls: string[];
+          id: string;
+          image_url: string | null;
+          ingredients: string[];
+          is_active: boolean;
+          min_stock: number;
+          name: string;
+          sale_price: number;
+          size: string | null;
+          sku: string | null;
+          tenant_id: string;
+          unit: string;
+          updated_at: string;
+        };
+        Insert: {
+          addons?: Json | null;
+          barcode?: string | null;
+          category_id?: string | null;
+          cost_price?: number;
+          created_at?: string;
+          description?: string | null;
+          discount?: number;
+          gallery_urls?: string[];
+          id?: string;
+          image_url?: string | null;
+          ingredients?: string[];
+          is_active?: boolean;
+          min_stock?: number;
+          name: string;
+          sale_price?: number;
+          size?: string | null;
+          sku?: string | null;
+          tenant_id: string;
+          unit?: string;
+          updated_at?: string;
+        };
+        Update: {
+          addons?: Json | null;
+          barcode?: string | null;
+          category_id?: string | null;
+          cost_price?: number;
+          created_at?: string;
+          description?: string | null;
+          discount?: number;
+          gallery_urls?: string[];
+          id?: string;
+          image_url?: string | null;
+          ingredients?: string[];
+          is_active?: boolean;
+          min_stock?: number;
+          name?: string;
+          sale_price?: number;
+          size?: string | null;
+          sku?: string | null;
+          tenant_id?: string;
+          unit?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "products_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          avatar_url: string | null;
+          branch_id: string | null;
+          company_id: string | null;
+          created_at: string;
+          department_id: string | null;
+          email: string | null;
+          employee_no: string | null;
+          employment_date: string | null;
+          full_name: string | null;
+          hired_by: string | null;
+          id: string;
+          is_active: boolean;
+          job_title: string | null;
+          last_device: string | null;
+          last_ip: string | null;
+          last_login_at: string | null;
+          last_user_agent: string | null;
+          must_change_password: boolean;
+          national_id: string | null;
+          password_changed_at: string | null;
+          phone: string | null;
+          status: Database["public"]["Enums"]["account_status"];
+          tenant_id: string | null;
+          updated_at: string;
+          username: string | null;
+        };
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          avatar_url?: string | null;
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          department_id?: string | null;
+          email?: string | null;
+          employee_no?: string | null;
+          employment_date?: string | null;
+          full_name?: string | null;
+          hired_by?: string | null;
+          id: string;
+          is_active?: boolean;
+          job_title?: string | null;
+          last_device?: string | null;
+          last_ip?: string | null;
+          last_login_at?: string | null;
+          last_user_agent?: string | null;
+          must_change_password?: boolean;
+          national_id?: string | null;
+          password_changed_at?: string | null;
+          phone?: string | null;
+          status?: Database["public"]["Enums"]["account_status"];
+          tenant_id?: string | null;
+          updated_at?: string;
+          username?: string | null;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          avatar_url?: string | null;
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          department_id?: string | null;
+          email?: string | null;
+          employee_no?: string | null;
+          employment_date?: string | null;
+          full_name?: string | null;
+          hired_by?: string | null;
+          id?: string;
+          is_active?: boolean;
+          job_title?: string | null;
+          last_device?: string | null;
+          last_ip?: string | null;
+          last_login_at?: string | null;
+          last_user_agent?: string | null;
+          must_change_password?: boolean;
+          national_id?: string | null;
+          password_changed_at?: string | null;
+          phone?: string | null;
+          status?: Database["public"]["Enums"]["account_status"];
+          tenant_id?: string | null;
+          updated_at?: string;
+          username?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      purchase_items: {
+        Row: {
+          cost_price: number;
+          created_at: string;
+          id: string;
+          line_total: number;
+          product_id: string;
+          purchase_id: string;
+          quantity: number;
+          tenant_id: string;
+        };
+        Insert: {
+          cost_price?: number;
+          created_at?: string;
+          id?: string;
+          line_total: number;
+          product_id: string;
+          purchase_id: string;
+          quantity: number;
+          tenant_id: string;
+        };
+        Update: {
+          cost_price?: number;
+          created_at?: string;
+          id?: string;
+          line_total?: number;
+          product_id?: string;
+          purchase_id?: string;
+          quantity?: number;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_items_purchase_id_fkey";
+            columns: ["purchase_id"];
+            isOneToOne: false;
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_items_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      purchase_returns: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          id: string;
+          processed_by: string;
+          purchase_id: string;
+          reason: string;
+          tenant_id: string;
+          total: number;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          id?: string;
+          processed_by: string;
+          purchase_id: string;
+          reason: string;
+          tenant_id: string;
+          total?: number;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          id?: string;
+          processed_by?: string;
+          purchase_id?: string;
+          reason?: string;
+          tenant_id?: string;
+          total?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "purchase_returns_purchase_id_fkey";
+            columns: ["purchase_id"];
+            isOneToOne: false;
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_returns_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_returns_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      purchase_return_items: {
+        Row: {
+          cost_price: number;
+          created_at: string;
+          id: string;
+          line_total: number;
+          product_id: string;
+          product_name: string;
+          purchase_item_id: string;
+          purchase_return_id: string;
+          quantity: number;
+          tenant_id: string;
+        };
+        Insert: {
+          cost_price: number;
+          created_at?: string;
+          id?: string;
+          line_total: number;
+          product_id: string;
+          product_name: string;
+          purchase_item_id: string;
+          purchase_return_id: string;
+          quantity: number;
+          tenant_id: string;
+        };
+        Update: {
+          cost_price?: number;
+          created_at?: string;
+          id?: string;
+          line_total?: number;
+          product_id?: string;
+          product_name?: string;
+          purchase_item_id?: string;
+          purchase_return_id?: string;
+          quantity?: number;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "purchase_return_items_purchase_return_id_fkey";
+            columns: ["purchase_return_id"];
+            isOneToOne: false;
+            referencedRelation: "purchase_returns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_return_items_purchase_item_id_fkey";
+            columns: ["purchase_item_id"];
+            isOneToOne: false;
+            referencedRelation: "purchase_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_return_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchase_return_items_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      purchases: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          id: string;
+          notes: string | null;
+          received_at: string;
+          reference: string | null;
+          status: Database["public"]["Enums"]["purchase_status"];
+          supplier_id: string | null;
+          tenant_id: string;
+          total: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          received_at?: string;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["purchase_status"];
+          supplier_id?: string | null;
+          tenant_id: string;
+          total?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          received_at?: string;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["purchase_status"];
+          supplier_id?: string | null;
+          tenant_id?: string;
+          total?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "purchases_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchases_supplier_id_fkey";
+            columns: ["supplier_id"];
+            isOneToOne: false;
+            referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "purchases_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      role_permissions: {
+        Row: {
+          builtin_role: Database["public"]["Enums"]["app_role"] | null;
+          created_at: string;
+          custom_role_id: string | null;
+          id: string;
+          permission_key: string;
+          role_kind: string;
+          tenant_id: string | null;
+        };
+        Insert: {
+          builtin_role?: Database["public"]["Enums"]["app_role"] | null;
+          created_at?: string;
+          custom_role_id?: string | null;
+          id?: string;
+          permission_key: string;
+          role_kind: string;
+          tenant_id?: string | null;
+        };
+        Update: {
+          builtin_role?: Database["public"]["Enums"]["app_role"] | null;
+          created_at?: string;
+          custom_role_id?: string | null;
+          id?: string;
+          permission_key?: string;
+          role_kind?: string;
+          tenant_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_custom_role_id_fkey";
+            columns: ["custom_role_id"];
+            isOneToOne: false;
+            referencedRelation: "custom_roles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey";
+            columns: ["permission_key"];
+            isOneToOne: false;
+            referencedRelation: "permissions";
+            referencedColumns: ["key"];
+          },
+          {
+            foreignKeyName: "role_permissions_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sale_items: {
+        Row: {
+          cost_price_snapshot: number | null;
+          created_at: string;
+          discount: number;
+          id: string;
+          line_total: number;
+          product_id: string | null;
+          product_name: string;
+          quantity: number;
+          sale_id: string;
+          tax_rate: number;
+          tenant_id: string;
+          unit_price: number;
+        };
+        Insert: {
+          cost_price_snapshot?: number | null;
+          created_at?: string;
+          discount?: number;
+          id?: string;
+          line_total: number;
+          product_id?: string | null;
+          product_name: string;
+          quantity: number;
+          sale_id: string;
+          tax_rate?: number;
+          tenant_id: string;
+          unit_price: number;
+        };
+        Update: {
+          cost_price_snapshot?: number | null;
+          created_at?: string;
+          discount?: number;
+          id?: string;
+          line_total?: number;
+          product_id?: string | null;
+          product_name?: string;
+          quantity?: number;
+          sale_id?: string;
+          tax_rate?: number;
+          tenant_id?: string;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_items_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sale_refunds: {
+        Row: {
+          branch_id: string;
+          cash_session_id: string | null;
+          created_at: string;
+          discount: number;
+          id: string;
+          processed_by: string;
+          reason: string;
+          refund_method: Database["public"]["Enums"]["payment_method"];
+          sale_id: string;
+          subtotal: number;
+          tax_amount: number;
+          tenant_id: string;
+          total: number;
+        };
+        Insert: {
+          branch_id: string;
+          cash_session_id?: string | null;
+          created_at?: string;
+          discount?: number;
+          id?: string;
+          processed_by: string;
+          reason: string;
+          refund_method: Database["public"]["Enums"]["payment_method"];
+          sale_id: string;
+          subtotal?: number;
+          tax_amount?: number;
+          tenant_id: string;
+          total?: number;
+        };
+        Update: {
+          branch_id?: string;
+          cash_session_id?: string | null;
+          created_at?: string;
+          discount?: number;
+          id?: string;
+          processed_by?: string;
+          reason?: string;
+          refund_method?: Database["public"]["Enums"]["payment_method"];
+          sale_id?: string;
+          subtotal?: number;
+          tax_amount?: number;
+          tenant_id?: string;
+          total?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_refunds_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refunds_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refunds_cash_session_id_fkey";
+            columns: ["cash_session_id"];
+            isOneToOne: false;
+            referencedRelation: "cash_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refunds_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sale_refund_items: {
+        Row: {
+          cost_price_snapshot: number | null;
+          created_at: string;
+          discount_amount: number;
+          id: string;
+          product_id: string | null;
+          product_name: string;
+          quantity: number;
+          refund_id: string;
+          restocked: boolean;
+          sale_item_id: string;
+          subtotal_amount: number;
+          tax_amount: number;
+          tenant_id: string;
+          total_amount: number;
+          unit_price: number;
+        };
+        Insert: {
+          cost_price_snapshot?: number | null;
+          created_at?: string;
+          discount_amount: number;
+          id?: string;
+          product_id?: string | null;
+          product_name: string;
+          quantity: number;
+          refund_id: string;
+          restocked?: boolean;
+          sale_item_id: string;
+          subtotal_amount: number;
+          tax_amount: number;
+          tenant_id: string;
+          total_amount: number;
+          unit_price: number;
+        };
+        Update: {
+          cost_price_snapshot?: number | null;
+          created_at?: string;
+          discount_amount?: number;
+          id?: string;
+          product_id?: string | null;
+          product_name?: string;
+          quantity?: number;
+          refund_id?: string;
+          restocked?: boolean;
+          sale_item_id?: string;
+          subtotal_amount?: number;
+          tax_amount?: number;
+          tenant_id?: string;
+          total_amount?: number;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_refund_items_refund_id_fkey";
+            columns: ["refund_id"];
+            isOneToOne: false;
+            referencedRelation: "sale_refunds";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refund_items_sale_item_id_fkey";
+            columns: ["sale_item_id"];
+            isOneToOne: false;
+            referencedRelation: "sale_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refund_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_refund_items_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sales: {
+        Row: {
+          branch_id: string;
+          cashier_id: string;
+          customer_id: string | null;
+          created_at: string;
+          discount: number;
+          delivery_address: string | null;
+          delivery_customer_name: string | null;
+          delivery_customer_phone: string | null;
+          delivery_fee: number;
+          id: string;
+          invoice_no: number;
+          order_type: string;
+          table_id: string | null;
+          notes: string | null;
+          payment_method: Database["public"]["Enums"]["payment_method"];
+          session_id: string | null;
+          status: Database["public"]["Enums"]["sale_status"];
+          subtotal: number;
+          tax_amount: number;
+          tenant_id: string;
+          total: number;
+          updated_at: string;
+        };
+        Insert: {
+          branch_id: string;
+          cashier_id: string;
+          customer_id?: string | null;
+          created_at?: string;
+          discount?: number;
+          delivery_address?: string | null;
+          delivery_customer_name?: string | null;
+          delivery_customer_phone?: string | null;
+          delivery_fee?: number;
+          id?: string;
+          invoice_no: number;
+          order_type?: string;
+          table_id?: string | null;
+          notes?: string | null;
+          payment_method?: Database["public"]["Enums"]["payment_method"];
+          session_id?: string | null;
+          status?: Database["public"]["Enums"]["sale_status"];
+          subtotal?: number;
+          tax_amount?: number;
+          tenant_id: string;
+          total?: number;
+          updated_at?: string;
+        };
+        Update: {
+          branch_id?: string;
+          cashier_id?: string;
+          customer_id?: string | null;
+          created_at?: string;
+          discount?: number;
+          delivery_address?: string | null;
+          delivery_customer_name?: string | null;
+          delivery_customer_phone?: string | null;
+          delivery_fee?: number;
+          id?: string;
+          invoice_no?: number;
+          order_type?: string;
+          table_id?: string | null;
+          notes?: string | null;
+          payment_method?: Database["public"]["Enums"]["payment_method"];
+          session_id?: string | null;
+          status?: Database["public"]["Enums"]["sale_status"];
+          subtotal?: number;
+          tax_amount?: number;
+          tenant_id?: string;
+          total?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sales_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "cash_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      super_owners: {
+        Row: {
+          granted_at: string;
+          granted_by: string | null;
+          notes: string | null;
+          user_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          granted_by?: string | null;
+          notes?: string | null;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          granted_by?: string | null;
+          notes?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      suppliers: {
+        Row: {
+          address: string | null;
+          created_at: string;
+          email: string | null;
+          id: string;
+          is_active: boolean;
+          logo_url: string | null;
+          name: string;
+          notes: string | null;
+          phone: string | null;
+          tenant_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name: string;
+          notes?: string | null;
+          phone?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name?: string;
+          notes?: string | null;
+          phone?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      supplier_payments: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          branch_id: string;
+          cash_session_id: string | null;
+          supplier_id: string;
+          amount: number;
+          payment_method: string;
+          reference: string | null;
+          notes: string | null;
+          paid_at: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          branch_id: string;
+          cash_session_id?: string | null;
+          supplier_id: string;
+          amount: number;
+          payment_method: string;
+          reference?: string | null;
+          notes?: string | null;
+          paid_at?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          branch_id?: string;
+          cash_session_id?: string | null;
+          supplier_id?: string;
+          amount?: number;
+          payment_method?: string;
+          reference?: string | null;
+          notes?: string | null;
+          paid_at?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_cash_session_scope_fkey";
+            columns: ["cash_session_id", "tenant_id", "branch_id"];
+            isOneToOne: false;
+            referencedRelation: "cash_sessions";
+            referencedColumns: ["id", "tenant_id", "branch_id"];
+          },
+
+          {
+            foreignKeyName: "supplier_payments_branch_tenant_fkey";
+            columns: ["branch_id", "tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id", "tenant_id"];
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_tenant_fkey";
+            columns: ["supplier_id", "tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "suppliers";
+            referencedColumns: ["id", "tenant_id"];
+          },
+        ];
+      };
+      tenants: {
+        Row: {
+          created_at: string;
+          currency: string;
+          id: string;
+          logo_url: string | null;
+          name: string;
+          owner_id: string;
+          password_max_age_days: number | null;
+          require_owner_approval: boolean;
+          tax_rate: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          logo_url?: string | null;
+          name: string;
+          owner_id: string;
+          password_max_age_days?: number | null;
+          require_owner_approval?: boolean;
+          tax_rate?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          logo_url?: string | null;
+          name?: string;
+          owner_id?: string;
+          password_max_age_days?: number | null;
+          require_owner_approval?: boolean;
+          tax_rate?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      user_permission_overrides: {
+        Row: {
+          created_at: string;
+          granted: boolean;
+          granted_by: string | null;
+          id: string;
+          permission_key: string;
+          tenant_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          granted?: boolean;
+          granted_by?: string | null;
+          id?: string;
+          permission_key: string;
+          tenant_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          granted?: boolean;
+          granted_by?: string | null;
+          id?: string;
+          permission_key?: string;
+          tenant_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      user_roles: {
+        Row: {
+          branch_id: string | null;
+          company_id: string | null;
+          created_at: string;
+          custom_role_id: string | null;
+          department_id: string | null;
+          hired_by: string | null;
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          tenant_id: string;
+          user_id: string;
+        };
+        Insert: {
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          custom_role_id?: string | null;
+          department_id?: string | null;
+          hired_by?: string | null;
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          tenant_id: string;
+          user_id: string;
+        };
+        Update: {
+          branch_id?: string | null;
+          company_id?: string | null;
+          created_at?: string;
+          custom_role_id?: string | null;
+          department_id?: string | null;
+          hired_by?: string | null;
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          tenant_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_custom_role_tenant_fkey";
+            columns: ["custom_role_id", "tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "custom_roles";
+            referencedColumns: ["id", "tenant_id"];
+          },
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
+    Views: {
+      sales_profitability: {
+        Row: {
+          branch_id: string;
+          cost_of_goods_sold: number | null;
+          created_at: string;
+          discount: number;
+          gross_profit: number | null;
+          invoice_no: number;
+          items_with_unknown_cost: number;
+          net_revenue_before_tax: number;
+          sale_id: string;
+          status: Database["public"]["Enums"]["sale_status"];
+          subtotal: number;
+          tenant_id: string;
+        };
+        Relationships: [];
+      };
+    };
+    Functions: {
+      adjust_inventory_balance: {
+        Args: {
+          _branch_id: string;
+          _product_id: string;
+          _reason: string;
+          _target_quantity: number;
+          _tenant_id: string;
+        };
+        Returns: undefined;
+      };
+      apply_stock_change: {
+        Args: {
+          _branch_id: string;
+          _delta: number;
+          _product_id: string;
+          _tenant_id: string;
+        };
+        Returns: undefined;
+      };
+      bootstrap_first_super_owner: {
+        Args: { _user_id: string };
+        Returns: undefined;
+      };
+      clone_role_permissions: {
+        Args: {
+          _dst_custom_role_id: string;
+          _src_builtin?: Database["public"]["Enums"]["app_role"];
+          _src_custom_role_id?: string;
+          _tenant_id: string;
+        };
+        Returns: number;
+      };
+      close_cash_session: {
+        Args: { _closing_balance: number; _session_id: string };
+        Returns: {
+          branch_id: string;
+          cash_difference: number | null;
+          cashier_id: string;
+          closed_at: string | null;
+          closing_balance: number | null;
+          created_at: string;
+          expected_cash: number | null;
+          id: string;
+          notes: string | null;
+          opened_at: string;
+          opening_balance: number;
+          status: Database["public"]["Enums"]["cash_session_status"];
+          tenant_id: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "cash_sessions";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_purchase_with_items: {
+        Args: {
+          _branch_id: string;
+          _items: Json;
+          _notes: string | null;
+          _reference: string | null;
+          _supplier_id: string | null;
+          _tenant_id: string;
+          _user_id: string;
+        };
+        Returns: {
+          branch_id: string;
+          created_at: string;
+          id: string;
+          notes: string | null;
+          received_at: string;
+          reference: string | null;
+          status: Database["public"]["Enums"]["purchase_status"];
+          supplier_id: string | null;
+          tenant_id: string;
+          total: number;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "purchases";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_sale_with_items: {
+        Args: {
+          _branch_id: string;
+          _cashier_id: string;
+          _discount: number;
+          _items: Json;
+          _payment_method: Database["public"]["Enums"]["payment_method"];
+          _session_id: string;
+          _tenant_id: string;
+        };
+        Returns: {
+          branch_id: string;
+          cashier_id: string;
+          created_at: string;
+          discount: number;
+          id: string;
+          invoice_no: number;
+          notes: string | null;
+          payment_method: Database["public"]["Enums"]["payment_method"];
+          session_id: string | null;
+          status: Database["public"]["Enums"]["sale_status"];
+          subtotal: number;
+          tax_amount: number;
+          tenant_id: string;
+          total: number;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "sales";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      create_sale_refund: {
+        Args: {
+          _items: Json;
+          _reason: string;
+          _refund_method: Database["public"]["Enums"]["payment_method"];
+          _sale_id: string;
+          _tenant_id: string;
+        };
+        Returns: {
+          branch_id: string;
+          cash_session_id: string | null;
+          created_at: string;
+          discount: number;
+          id: string;
+          processed_by: string;
+          reason: string;
+          refund_method: Database["public"]["Enums"]["payment_method"];
+          sale_id: string;
+          subtotal: number;
+          tax_amount: number;
+          tenant_id: string;
+          total: number;
+        };
+      };
+      create_purchase_return: {
+        Args: {
+          _items: Json;
+          _purchase_id: string;
+          _reason: string;
+          _tenant_id: string;
+        };
+        Returns: {
+          branch_id: string;
+          created_at: string;
+          id: string;
+          processed_by: string;
+          purchase_id: string;
+          reason: string;
+          tenant_id: string;
+          total: number;
+        };
+      };
+      create_tenant_with_owner: {
+        Args: { _currency: string; _name: string; _tax_rate: number };
+        Returns: {
+          created_at: string;
+          currency: string;
+          id: string;
+          logo_url: string | null;
+          name: string;
+          owner_id: string;
+          password_max_age_days: number | null;
+          require_owner_approval: boolean;
+          tax_rate: number;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "tenants";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      assign_custom_role_to_user: {
+        Args: {
+          _actor_id: string;
+          _branch_id: string | null;
+          _custom_role_id: string;
+          _tenant_id: string;
+          _user_id: string;
+        };
+        Returns: undefined;
+      };
+      has_permission: {
+        Args: { _permission_key: string; _tenant_id: string; _user_id: string };
+        Returns: boolean;
+      };
+      get_super_owner_status: { Args: never; Returns: Json };
+      get_my_permissions: { Args: { _tenant_id: string }; Returns: string[] };
+      is_super_owner: { Args: { _user_id: string }; Returns: boolean };
+      reject_payroll_run: {
+        Args: {
+          _actor_id: string;
+          _reason: string;
+          _run_id: string;
+          _tenant_id: string;
+        };
+        Returns: undefined;
+      };
+      replace_user_role_in_tenant: {
+        Args: {
+          _actor_id: string;
+          _branch_id: string | null;
+          _role: Database["public"]["Enums"]["app_role"];
+          _tenant_id: string;
+          _user_id: string;
+        };
+        Returns: undefined;
+      };
+      touch_last_login: { Args: never; Returns: undefined };
+      transfer_user_role_branch: {
+        Args: { _branch_id: string | null; _tenant_id: string; _user_role_id: string };
+        Returns: undefined;
+      };
+    };
+    Enums: {
+      account_status:
+        "active" | "suspended" | "frozen" | "pending_approval" | "password_expired" | "archived";
+      app_role: "owner" | "manager" | "accountant" | "cashier" | "warehouse" | "waiter" | "kitchen";
+      cash_session_status: "open" | "closed";
+      inventory_txn_type: "in" | "out" | "adjust" | "sale" | "refund";
+      payment_method: "cash" | "card" | "transfer" | "mixed" | "credit";
+      purchase_status: "draft" | "received" | "cancelled" | "returned";
+      sale_status: "completed" | "refunded" | "void";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      account_status: [
+        "active",
+        "suspended",
+        "frozen",
+        "pending_approval",
+        "password_expired",
+        "archived",
+      ],
+      app_role: ["owner", "manager", "accountant", "cashier", "warehouse", "waiter", "kitchen"],
+      cash_session_status: ["open", "closed"],
+      inventory_txn_type: ["in", "out", "adjust", "sale", "refund"],
+      payment_method: ["cash", "card", "transfer", "mixed"],
+      purchase_status: ["draft", "received", "cancelled", "returned"],
+      sale_status: ["completed", "refunded", "void"],
+    },
+  },
+} as const;

@@ -1,0 +1,303 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const dashboard = readFileSync(
+  new URL("../src/routes/_authenticated/dashboard.tsx", import.meta.url),
+  "utf8",
+);
+const workflow = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
+const layout = readFileSync(
+  new URL("../src/routes/_authenticated/route.tsx", import.meta.url),
+  "utf8",
+);
+const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+
+test("dashboard rejects partial query failures instead of presenting misleading totals", () => {
+  assert.match(
+    dashboard,
+    /for \(const result of \[salesToday, salesMonth, salesTrend, refundsToday, refundsMonth, refundsTrend, expensesMonth, expByCat, lowStock, sessions, customersCount\]\)/,
+  );
+  assert.match(dashboard, /if \(result\.error\) throw result\.error/);
+  assert.match(dashboard, /if \(catsRes\.error\) throw catsRes\.error/);
+  assert.match(dashboard, /لم يتم عرض أرقام جزئية أو مضللة/);
+});
+
+test("CI runs on the active feature branch and supports a manual verification run", () => {
+  assert.match(workflow, /branches: \["main", "feature\/\*\*", "feat\/\*\*"\]/);
+  assert.match(workflow, /workflow_dispatch:/);
+});
+
+test("authenticated workspace prevents horizontal overflow and motion respects accessibility preferences", () => {
+  assert.match(layout, /<main className="min-w-0 flex-1/);
+  assert.match(styles, /prefers-reduced-motion: no-preference/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /focus-visible/);
+});
+
+const inventory = readFileSync(
+  new URL("../src/routes/_authenticated/inventory.index.tsx", import.meta.url),
+  "utf8",
+);
+
+test("inventory reads every page instead of silently stopping at the Supabase row cap", () => {
+  assert.match(inventory, /async function fetchAllRows<T>/);
+  assert.match(inventory, /pageSize = 500/);
+  assert.match(inventory, /query\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(inventory, /if \(page\.length < pageSize\) return rows/);
+  assert.match(inventory, /\.order\("id"\)/);
+});
+
+test("inventory distinguishes query failures from a genuinely empty stock list", () => {
+  assert.match(inventory, /branches\.isError/);
+  assert.match(inventory, /inventory\.isError/);
+  assert.match(inventory, /لم نعرض أرقاماً جزئية/);
+  assert.match(inventory, /inventory\.refetch\(\)/);
+});
+
+const sales = readFileSync(
+  new URL("../src/routes/_authenticated/sales.index.tsx", import.meta.url),
+  "utf8",
+);
+
+test("sales history is fully paginated and refund totals are fetched in bounded batches", () => {
+  assert.match(sales, /async function fetchAllRows<T>/);
+  assert.match(sales, /\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(sales, /\.order\("created_at", \{ ascending: false \}\)/);
+  assert.match(sales, /i \+= 200/);
+  assert.match(sales, /لم نعرض نتائج جزئية/);
+});
+
+const pos = readFileSync(new URL("../src/routes/_authenticated/pos.tsx", import.meta.url), "utf8");
+const purchases = readFileSync(
+  new URL("../src/routes/_authenticated/purchases.tsx", import.meta.url),
+  "utf8",
+);
+
+test("POS loads the full product catalogue and branch stock in deterministic pages", () => {
+  assert.match(pos, /async function fetchAllRows<T>/);
+  assert.match(pos, /\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(pos, /\.order\("name"\)/);
+  assert.match(pos, /\.order\("product_id"\)/);
+});
+
+test("purchasing loads the full history and batches supplier, branch, and return lookups", () => {
+  assert.match(purchases, /async function fetchAllRows<T>/);
+  assert.match(purchases, /\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(purchases, /\.order\("created_at", \{ ascending: false \}\)/);
+  assert.match(purchases, /\.order\("id", \{ ascending: false \}\)/);
+  assert.match(purchases, /const batchSize = 200/);
+  assert.match(purchases, /if \(error\) throw error/);
+  assert.match(purchases, /branches\.isError \|\| suppliers\.isError \|\| products\.isError/);
+  assert.match(purchases, /useEffect\(\(\) =>/);
+});
+
+const authLayout = readFileSync(
+  new URL("../src/routes/_authenticated/route.tsx", import.meta.url),
+  "utf8",
+);
+const sonner = readFileSync(new URL("../src/components/ui/sonner.tsx", import.meta.url), "utf8");
+const userAdmin = readFileSync(
+  new URL("../src/routes/_authenticated/users-admin.tsx", import.meta.url),
+  "utf8",
+);
+
+test("dashboard and account menu show profile names, including the platform owner's requested name", () => {
+  assert.match(dashboard, /أهلاً بك في نظام إدارة/);
+  assert.match(dashboard, /إدارة أسهل/);
+  assert.match(dashboard, /shafiqalwatiry@gmail\.com/);
+  assert.match(authLayout, /topbar-profile-name/);
+  assert.match(authLayout, /شفيق الوتيري/);
+  assert.doesNotMatch(userAdmin, /u\.email \?\? u\.username/);
+});
+
+test("authenticated workspace removes the side drawer and keeps applications navigation in the top bar", () => {
+  assert.doesNotMatch(
+    authLayout,
+    /SidebarProvider|SidebarTrigger|SidebarInset|AppSidebar|SidebarRouteSync/,
+  );
+  assert.match(authLayout, /<AppLauncher \/>/);
+  assert.match(authLayout, /<WorkspaceTabs \/>/);
+});
+
+test("user edit dialog remains scrollable on short mobile screens", () => {
+  assert.ok(userAdmin.includes("max-h-[85dvh] overflow-y-auto overscroll-contain"));
+});
+
+test("action toasts are centered at the top in RTL layout", () => {
+  assert.match(sonner, /dir="rtl"/);
+  assert.match(styles, /data-x-position="center"/);
+  assert.match(styles, /data-y-position="top"/);
+});
+
+test("inventory alerts can be filtered by negative, missing, and below-minimum stock and prioritize critical rows", () => {
+  assert.match(inventory, /stockFilter === "critical"/);
+  assert.match(inventory, /stockFilter === "missing"/);
+  assert.match(inventory, /stockFilter === "below-min"/);
+  assert.match(inventory, /const visibleRows = useMemo/);
+  assert.match(inventory, /أقل من الحد الأدنى/);
+  assert.match(inventory, /r\.quantity >= 0 && r\.quantity < r\.min_stock/);
+});
+
+const settings = readFileSync(
+  new URL("../src/routes/_authenticated/settings.tsx", import.meta.url),
+  "utf8",
+);
+const theme = readFileSync(new URL("../src/lib/theme.tsx", import.meta.url), "utf8");
+const appSidebar = readFileSync(
+  new URL("../src/components/app-sidebar.tsx", import.meta.url),
+  "utf8",
+);
+const appLauncher = readFileSync(
+  new URL("../src/components/app-launcher.tsx", import.meta.url),
+  "utf8",
+);
+const workspaceTabs = readFileSync(
+  new URL("../src/components/workspace-tabs.tsx", import.meta.url),
+  "utf8",
+);
+const campaignMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20261111233538_marketing_campaigns_management.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+test("owner design studio customizes workspace colors and background with a safe reset", () => {
+  assert.match(settings, /استوديو تطوير وتخصيص النظام/);
+  assert.match(settings, /تطبيق التصميم/);
+  assert.match(settings, /استعادة الافتراضي/);
+  assert.match(settings, /isSuperOwner &&/);
+  assert.match(theme, /DESIGN_STORAGE_KEY/);
+  assert.match(theme, /--background/);
+  assert.match(theme, /backgroundImage/);
+  assert.match(theme, /resetDesign/);
+});
+
+test("app launcher mirrors enterprise, system, and owner-only custom navigation with the same permission boundaries", () => {
+  assert.match(appLauncher, /enterpriseGroup/);
+  assert.match(appLauncher, /systemItems/);
+  assert.match(appLauncher, /اختصارات مخصصة/);
+  assert.match(appLauncher, /navOverrides\[basePath\]/);
+  assert.match(appLauncher, /permissions\.data\.has\(item\.permission\)/);
+});
+
+test("workspace tabs preserve pinned pages and enforce a stable maximum", () => {
+  assert.match(workspaceTabs, /MAX_TABS = 12/);
+  assert.match(workspaceTabs, /function limitTabs/);
+  assert.match(workspaceTabs, /function togglePinned/);
+  assert.match(workspaceTabs, /PinOff/);
+  assert.match(workspaceTabs, /tab\.pinned/);
+});
+
+test("custom sidebar tabs are owner-only shortcuts to an allowlisted existing route", () => {
+  assert.match(settings, /ras-custom-sidebar-items-v1/);
+  assert.match(settings, /normalizeCustomShortcuts/);
+  assert.match(settings, /الحد الأقصى 12 اختصاراً/);
+  assert.match(appSidebar, /اختصارات مخصصة/);
+  assert.match(appSidebar, /isSuperOwner && customItems.length/);
+  assert.match(appSidebar, /ras-custom-tabs-updated/);
+});
+
+const adsRoute = readFileSync(
+  new URL("../src/routes/_authenticated/ads.tsx", import.meta.url),
+  "utf8",
+);
+
+test("marketing campaigns have tenant isolation and owner-managed lifecycle controls on the dedicated ads route", () => {
+  assert.doesNotMatch(
+    settings,
+    /campaignCreate|campaignUpdate|campaignDelete|uploadCampaignImage|إدارة العروض والإعلانات/,
+  );
+  assert.match(adsRoute, /saveCampaign/);
+  assert.match(adsRoute, /uploadImage/);
+  assert.match(adsRoute, /starts_at/);
+  assert.match(adsRoute, /ends_at/);
+  assert.match(adsRoute, /updateStatus/);
+  assert.match(adsRoute, /deleteCampaign/);
+  assert.match(adsRoute, /get_my_permissions/);
+  assert.match(adsRoute, /permissions\.data\?\.includes\("ads\.manage"\) === true/);
+  assert.match(adsRoute, /\.eq\("tenant_id", tenantId!\)/);
+  assert.match(adsRoute, /\.eq\("company_id", membership\.company_id\)/);
+  assert.match(campaignMigration, /enable row level security/);
+  assert.match(campaignMigration, /private\.is_tenant_member/);
+  assert.match(campaignMigration, /private\.is_tenant_admin/);
+});
+
+const imageUploader = readFileSync(
+  new URL("../src/components/image-uploader.tsx", import.meta.url),
+  "utf8",
+);
+const branches = readFileSync(
+  new URL("../src/routes/_authenticated/branches.tsx", import.meta.url),
+  "utf8",
+);
+const categories = readFileSync(
+  new URL("../src/routes/_authenticated/categories.tsx", import.meta.url),
+  "utf8",
+);
+const products = readFileSync(
+  new URL("../src/routes/_authenticated/products.tsx", import.meta.url),
+  "utf8",
+);
+const posPage = readFileSync(
+  new URL("../src/routes/_authenticated/pos.tsx", import.meta.url),
+  "utf8",
+);
+
+test("shared image uploader validates formats and stores permanent public URLs", () => {
+  assert.match(imageUploader, /ALLOWED_TYPES/);
+  assert.match(imageUploader, /image\/webp/);
+  assert.match(imageUploader, /image\/avif/);
+  assert.match(imageUploader, /upsert: false/);
+  assert.match(imageUploader, /getPublicUrl\(path\)/);
+  assert.doesNotMatch(imageUploader, /createSignedUrl/);
+});
+
+test("branch and category image fields use the shared uploader", () => {
+  assert.match(
+    branches,
+    /<ImageUploader tenantId={tenantId} companyId={companyId \|\| null} folder="branches"/,
+  );
+  assert.match(
+    categories,
+    /<ImageUploader tenantId={tenantId} companyId={companyId} folder="categories"/,
+  );
+});
+
+test("product images use the active company's public asset path", () => {
+  assert.match(products, /companies\/\$\{companyId\}\/products/);
+});
+
+test("POS supports scheduled promotional placements without changing checkout logic", () => {
+  assert.match(posPage, /pos-marketing-campaigns/);
+  assert.match(posPage, /eq\("placement", "pos_promo"\)/);
+  assert.match(posPage, /posPromos\.data\.map/);
+});
+
+test("developer studio can rename or hide non-critical built-in tabs and restores defaults", () => {
+  assert.match(settings, /MANAGEABLE_NAV_ITEMS/);
+  assert.match(settings, /ras-sidebar-overrides-v1/);
+  assert.match(settings, /تعديل أسماء التطبيقات وإظهارها/);
+  assert.match(settings, /protected: true/);
+  assert.match(settings, /resetNavOverrides/);
+  assert.match(appSidebar, /navOverrides\[item\.url\.split\("#"\)\[0\]\]/);
+  assert.match(appSidebar, /ras-sidebar-overrides-updated/);
+});
+
+test("dashboard provides permission-scoped operations, notifications, and a truthful database health check", () => {
+  assert.match(dashboard, /أحدث الفواتير والطلبات/);
+  assert.match(dashboard, /invoice_no/);
+  assert.match(dashboard, /حالة المطبخ/);
+  assert.match(dashboard, /dashboard-notifications/);
+  assert.match(dashboard, /notifications\.view/);
+  assert.match(dashboard, /notification_reads/);
+  assert.match(dashboard, /dashboard-system-status/);
+  assert.match(dashboard, /قاعدة البيانات/);
+  assert.match(dashboard, /systemStatusQuery\.isError/);
+  assert.match(dashboard, /اختصارات العمل/);
+  assert.match(dashboard, /hasPermission\("sales.create"\)/);
+  assert.match(dashboard, /hasPermission\("kitchen.view"\)/);
+  assert.match(dashboard, /hasPermission\("reports.view"\)/);
+});

@@ -1,0 +1,726 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const ROLE_ENUM = z.enum([
+  "owner",
+  "manager",
+  "cashier",
+  "accountant",
+  "warehouse",
+  "waiter",
+  "kitchen",
+]);
+
+async function assertPermission(
+  supabase: any,
+  userId: string,
+  tenantId: string,
+  permissionKey: string,
+) {
+  const { data, error } = await supabase.rpc("has_permission", {
+    _user_id: userId,
+    _tenant_id: tenantId,
+    _permission_key: permissionKey,
+  });
+  if (error) throw new Error(error.message);
+  if (data !== true) throw new Error(`غير مصرح: الصلاحية المطلوبة ${permissionKey}.`);
+}
+async function assertTargetBelongsToTenant(
+  supabaseAdmin: any,
+  targetUserId: string,
+  tenantId: string,
+) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", targetUserId)
+    .eq("tenant_id", tenantId)
+    .limit(1);
+  if (error) throw new Error(error.message);
+  if (!data?.length) {
+    throw new Error("المستخدم المستهدف لا ينتمي إلى المؤسسة المحددة.");
+  }
+}
+
+async function assertBranchBelongsToTenant(
+  supabaseAdmin: any,
+  branchId: string | null | undefined,
+  tenantId: string,
+) {
+  if (!branchId) return null;
+  const { data, error } = await supabaseAdmin
+    .from("branches")
+    .select("id,company_id")
+    .eq("id", branchId)
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("الفرع المحدد غير موجود أو غير نشط داخل المؤسسة المطلوبة.");
+  return data as { id: string; company_id: string | null };
+}
+
+async function getActorCompanyScope(
+  supabase: any,
+  supabaseAdmin: any,
+  actorId: string,
+  tenantId: string,
+) {
+  const { data: isSuperOwner, error: superOwnerError } = await supabase.rpc("is_super_owner", {
+    _user_id: actorId,
+  });
+  if (superOwnerError) throw new Error(superOwnerError.message);
+
+  const { data: roles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("role,company_id,branch_id")
+    .eq("user_id", actorId)
+    .eq("tenant_id", tenantId);
+  if (rolesError) throw new Error(rolesError.message);
+
+  const actorRoles = roles ?? [];
+  const isTenantOwner = actorRoles.some((r: any) => r.role === "owner" && r.company_id == null);
+  const companyIds = Array.from(
+    new Set(actorRoles.map((r: any) => r.company_id).filter(Boolean)),
+  ) as string[];
+  if (companyIds.length > 1 && !isSuperOwner && !isTenantOwner) {
+    throw new Error("حسابك مرتبط بأكثر من شركة؛ راجع إعدادات إسناد الشركة قبل المتابعة.");
+  }
+
+  let companyId: string | null = companyIds[0] ?? null;
+  if (!isSuperOwner && !isTenantOwner) {
+    const branchIds = Array.from(
+      new Set(actorRoles.map((r: any) => r.branch_id).filter(Boolean)),
+    ) as string[];
+    if (branchIds.length) {
+      const { data: branches, error: branchesError } = await supabaseAdmin
+        .from("branches")
+        .select("id,company_id")
+        .eq("tenant_id", tenantId)
+        .in("id", branchIds);
+      if (branchesError) throw new Error(branchesError.message);
+      if ((branches ?? []).length !== branchIds.length) {
+        throw new Error("يوجد فرع غير صالح ضمن إسناد حسابك؛ راجع مسؤول النظام.");
+      }
+      const branchCompanyIds = Array.from(
+        new Set((branches ?? []).map((b: any) => b.company_id).filter(Boolean)),
+      ) as string[];
+      if (
+        branchCompanyIds.length > 1 ||
+        (companyId && (branches ?? []).some((b: any) => b.company_id !== companyId))
+      ) {
+        throw new Error("فروع حسابك لا تتطابق مع الشركة المسندة إليك.");
+      }
+      companyId = companyId ?? branchCompanyIds[0] ?? null;
+    }
+  }
+
+  return {
+    isSuperOwner: !!isSuperOwner,
+    isTenantOwner,
+    companyId,
+    roles: actorRoles,
+  };
+}
+
+function hasCompanyWideUserAdminScope(actorScope: {
+  isSuperOwner: boolean;
+  isTenantOwner: boolean;
+  companyId: string | null;
+  roles: Array<{ role: string; company_id: string | null; branch_id: string | null }>;
+}) {
+  return (
+    !!actorScope.companyId &&
+    actorScope.roles.some(
+      (r) => r.company_id === actorScope.companyId && ["owner", "manager"].includes(r.role),
+    )
+  );
+}
+
+async function assertBranchInActorScope(
+  supabaseAdmin: any,
+  branchId: string | null | undefined,
+  tenantId: string,
+  actorScope: {
+    isSuperOwner: boolean;
+    isTenantOwner: boolean;
+    companyId: string | null;
+    roles: Array<{ role: string; company_id: string | null; branch_id: string | null }>;
+  },
+) {
+  const branch = await assertBranchBelongsToTenant(supabaseAdmin, branchId, tenantId);
+  if (actorScope.isSuperOwner || actorScope.isTenantOwner) return branch;
+  const hasCompanyWideScope = hasCompanyWideUserAdminScope(actorScope);
+  if (!branch) {
+    if (hasCompanyWideScope) return null;
+    throw new Error("يجب اختيار أحد الفروع المسندة إلى حسابك لإدارة الموظفين.");
+  }
+  if (hasCompanyWideScope && branch.company_id === actorScope.companyId) return branch;
+  if (
+    actorScope.roles.some(
+      (r) =>
+        r.branch_id === branch.id && (r.company_id == null || r.company_id === branch.company_id),
+    )
+  )
+    return branch;
+  throw new Error("لا يمكنك إدارة مستخدمين أو نقلهم إلى فرع خارج نطاقك.");
+}
+
+async function assertCanAssignRole(supabase: any, actorId: string, tenantId: string, role: string) {
+  if (role === "owner") {
+    throw new Error("لا يمكن إسناد دور مالك المؤسسة من شاشة إدارة الموظفين.");
+  }
+  if (role !== "manager") return;
+
+  const { data: isSuperOwner, error: superOwnerError } = await supabase.rpc("is_super_owner", {
+    _user_id: actorId,
+  });
+  if (superOwnerError) throw new Error(superOwnerError.message);
+  if (isSuperOwner) return;
+
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", actorId)
+    .eq("tenant_id", tenantId)
+    .eq("role", "owner")
+    .is("company_id", null)
+    .limit(1);
+  if (error) throw new Error(error.message);
+  if (!data?.length) {
+    throw new Error("إسناد دور المدير العام متاح لمالك المؤسسة فقط.");
+  }
+}
+
+async function assertTargetRoleManageable(
+  supabase: any,
+  supabaseAdmin: any,
+  actorId: string,
+  targetUserId: string,
+  tenantId: string,
+) {
+  const actorScope = await getActorCompanyScope(supabase, supabaseAdmin, actorId, tenantId);
+
+  const { data: targetSuperOwner, error: targetSuperError } = await supabaseAdmin
+    .from("super_owners")
+    .select("user_id")
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+  if (targetSuperError) throw new Error(targetSuperError.message);
+  if (targetSuperOwner) {
+    throw new Error("لا يمكن تعديل حساب المالك الأعلى من إدارة الموظفين.");
+  }
+
+  const { data: targetProfile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("company_id,branch_id")
+    .eq("id", targetUserId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  if (profileError) throw new Error(profileError.message);
+  if (!targetProfile) throw new Error("ملف المستخدم غير موجود داخل المؤسسة المحددة.");
+
+  const { data: targetRoles, error: targetError } = await supabaseAdmin
+    .from("user_roles")
+    .select("role,company_id,branch_id")
+    .eq("user_id", targetUserId)
+    .eq("tenant_id", tenantId);
+  if (targetError) throw new Error(targetError.message);
+
+  const roles = targetRoles ?? [];
+  if (!actorScope.isSuperOwner && roles.some((r: any) => r.role === "owner")) {
+    throw new Error("لا يمكن تعديل حساب مالك المؤسسة إلا بواسطة المالك الأعلى.");
+  }
+  if (
+    !actorScope.isSuperOwner &&
+    !actorScope.isTenantOwner &&
+    roles.some((r: any) => r.role === "manager")
+  ) {
+    throw new Error("لا يحق لمدير الشركة إدارة حساب مدير آخر.");
+  }
+
+  if (actorScope.isSuperOwner || actorScope.isTenantOwner) return;
+
+  if (!actorScope.companyId) {
+    throw new Error("حسابك غير مرتبط بشركة محددة؛ لا يمكنه إدارة حسابات الموظفين.");
+  }
+
+  const branchIds = Array.from(
+    new Set([targetProfile.branch_id, ...roles.map((r: any) => r.branch_id)].filter(Boolean)),
+  ) as string[];
+  const targetCompanyIds = new Set<string>();
+  if (targetProfile.company_id) targetCompanyIds.add(targetProfile.company_id);
+  for (const r of roles) if (r.company_id) targetCompanyIds.add(r.company_id);
+
+  if (branchIds.length) {
+    const { data: branches, error: branchesError } = await supabaseAdmin
+      .from("branches")
+      .select("id,company_id")
+      .eq("tenant_id", tenantId)
+      .in("id", branchIds);
+    if (branchesError) throw new Error(branchesError.message);
+    if ((branches ?? []).length !== branchIds.length) {
+      throw new Error("يوجد فرع غير صالح ضمن إسناد الموظف؛ راجع مسؤول النظام.");
+    }
+    for (const b of branches ?? []) if (b.company_id) targetCompanyIds.add(b.company_id);
+  }
+
+  if (targetCompanyIds.size !== 1 || !targetCompanyIds.has(actorScope.companyId)) {
+    throw new Error("لا يمكنك إدارة حساب موظف لا يتبع شركتك.");
+  }
+
+  if (!hasCompanyWideUserAdminScope(actorScope)) {
+    const allowedBranchIds = new Set(actorScope.roles.map((r: any) => r.branch_id).filter(Boolean));
+    if (!branchIds.length || branchIds.some((id) => !allowedBranchIds.has(id))) {
+      throw new Error("لا يمكنك إدارة موظف خارج الفروع المسندة إلى حسابك.");
+    }
+  }
+}
+/**
+ * Create a new user (auth account + profile + role assignment) inside a tenant.
+ * Caller must be Super Owner OR owner/manager of the given tenant.
+ */
+export const createUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        tenant_id: z.string().uuid(),
+        email: z.string().email(),
+        password: z.string().min(8),
+        full_name: z.string().min(1).max(120),
+        username: z.string().min(2).max(60).optional().nullable(),
+        phone: z.string().max(30).optional().nullable(),
+        role: ROLE_ENUM,
+        custom_role_id: z.string().uuid().optional().nullable(),
+        branch_id: z.string().uuid().optional().nullable(),
+        avatar_url: z
+          .string()
+          .max(2048)
+          .refine(
+            (value) => value.startsWith("private://") || z.string().url().safeParse(value).success,
+            "رابط الصورة غير صالح",
+          )
+          .optional()
+          .nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: actorIsSuperOwner, error: actorRoleError } = await context.supabase.rpc(
+      "is_super_owner",
+      { _user_id: context.userId },
+    );
+    if (actorRoleError) throw new Error(actorRoleError.message);
+
+    // Platform Super Owner provisions only the institution's operational Manager.
+    // The Manager then creates and manages the restaurant's staff accounts.
+    if (actorIsSuperOwner && data.role !== "manager") {
+      throw new Error(
+        "المالك الأعلى ينشئ حساب مدير المؤسسة فقط. مدير المؤسسة هو من ينشئ حسابات الموظفين.",
+      );
+    }
+    if (!actorIsSuperOwner && data.role === "owner") {
+      throw new Error("لا يمكن إنشاء حساب مالك مؤسسة من خلال إدارة الموظفين.");
+    }
+
+    await assertPermission(context.supabase, context.userId, data.tenant_id, "users.create");
+    await assertCanAssignRole(context.supabase, context.userId, data.tenant_id, data.role);
+    if (["cashier", "warehouse", "waiter", "kitchen"].includes(data.role) && !data.branch_id) {
+      throw new Error("يجب إسناد الموظف إلى فرع محدد قبل إنشاء حسابه.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const actorScope = await getActorCompanyScope(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      data.tenant_id,
+    );
+    const selectedBranch = await assertBranchInActorScope(
+      supabaseAdmin,
+      data.branch_id,
+      data.tenant_id,
+      actorScope,
+    );
+    let targetCompanyId: string | null = selectedBranch?.company_id ?? actorScope.companyId;
+    if (actorScope.isTenantOwner || actorScope.isSuperOwner) {
+      targetCompanyId = selectedBranch?.company_id ?? null;
+    } else if (!targetCompanyId) {
+      throw new Error("حسابك غير مرتبط بشركة محددة؛ لا يمكنه إنشاء مستخدمين دون إسناد شركة.");
+    }
+
+    if (data.role === "manager" && !targetCompanyId) {
+      const { count, error: companiesError } = await supabaseAdmin
+        .from("companies")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", data.tenant_id);
+      if (companiesError) throw new Error(companiesError.message);
+      if ((count ?? 0) > 0) {
+        throw new Error("يجب اختيار فرع تابع للشركة عند إنشاء مدير شركة.");
+      }
+    }
+
+    // Create auth user (auto-confirm so they can sign in immediately)
+    const { data: created, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name },
+    });
+    if (authErr) throw new Error(authErr.message);
+    const newId = created.user.id;
+
+    // Upsert profile (the handle_new_user trigger creates a minimal one)
+    const { error: profErr } = await supabaseAdmin.from("profiles").upsert({
+      id: newId,
+      full_name: data.full_name,
+      username: data.username ?? null,
+      phone: data.phone ?? null,
+      avatar_url: data.avatar_url ?? null,
+      tenant_id: data.tenant_id,
+      company_id: targetCompanyId,
+      branch_id: data.branch_id ?? null,
+      is_active: true,
+    });
+    if (profErr) {
+      await supabaseAdmin.auth.admin.deleteUser(newId);
+      throw new Error(profErr.message);
+    }
+
+    // Assign either a built-in role or a tenant-owned custom role.
+    if (data.custom_role_id) {
+      if (data.role !== "waiter") {
+        await supabaseAdmin.auth.admin.deleteUser(newId);
+        throw new Error(
+          "الدور المخصص يستخدم مستوى أساس محدوداً؛ امنح الصلاحيات المطلوبة من إعدادات الدور.",
+        );
+      }
+      await assertPermission(context.supabase, context.userId, data.tenant_id, "roles.manage");
+      const { data: customRole, error: customRoleError } = await supabaseAdmin
+        .from("custom_roles")
+        .select("id")
+        .eq("id", data.custom_role_id)
+        .eq("tenant_id", data.tenant_id)
+        .maybeSingle();
+      if (customRoleError || !customRole) {
+        await supabaseAdmin.auth.admin.deleteUser(newId);
+        throw new Error(customRoleError?.message ?? "الدور المخصص لا يتبع هذه المؤسسة.");
+      }
+      const { error: roleErr } = await context.supabase.rpc("assign_custom_role_to_user", {
+        _user_id: newId,
+        _tenant_id: data.tenant_id,
+        _custom_role_id: data.custom_role_id,
+        _branch_id: data.branch_id ?? null,
+        _actor_id: context.userId,
+      });
+      if (roleErr) {
+        await supabaseAdmin.auth.admin.deleteUser(newId);
+        throw new Error(roleErr.message);
+      }
+    } else {
+      const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
+        user_id: newId,
+        tenant_id: data.tenant_id,
+        role: data.role as any,
+        company_id: targetCompanyId,
+        branch_id: data.branch_id ?? null,
+        hired_by: context.userId,
+      });
+      if (roleErr) {
+        await supabaseAdmin.auth.admin.deleteUser(newId);
+        throw new Error(roleErr.message);
+      }
+    }
+
+    // Also stamp hired_by on profile for quick lookups
+    const { error: hiredByError } = await supabaseAdmin
+      .from("profiles")
+      .update({ hired_by: context.userId })
+      .eq("id", newId);
+    if (hiredByError) {
+      await supabaseAdmin.auth.admin.deleteUser(newId);
+      throw new Error(hiredByError.message);
+    }
+
+    return { ok: true, user_id: newId };
+  });
+
+/**
+ * Update user password. Caller must be tenant admin of a tenant the target belongs to,
+ * or Super Owner, or the user themselves.
+ */
+export const updateUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        new_password: z.string().min(8),
+        tenant_id: z.string().uuid().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.user_id !== context.userId) {
+      if (!data.tenant_id) throw new Error("tenant_id مطلوب لتغيير كلمة مرور مستخدم آخر.");
+      await assertPermission(
+        context.supabase,
+        context.userId,
+        data.tenant_id,
+        "users.change_password",
+      );
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.user_id !== context.userId) {
+      await assertTargetBelongsToTenant(supabaseAdmin, data.user_id, data.tenant_id!);
+      await assertTargetRoleManageable(
+        context.supabase,
+        supabaseAdmin,
+        context.userId,
+        data.user_id,
+        data.tenant_id!,
+      );
+    }
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password: data.new_password,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Toggle a user's active status inside a tenant.
+ */
+export const toggleUserStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+        is_active: z.boolean(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPermission(
+      context.supabase,
+      context.userId,
+      data.tenant_id,
+      data.is_active ? "users.approve" : "users.suspend",
+    );
+    if (data.user_id === context.userId && !data.is_active) {
+      throw new Error("لا يمكنك إيقاف حسابك بنفسك.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertTargetBelongsToTenant(supabaseAdmin, data.user_id, data.tenant_id);
+    await assertTargetRoleManageable(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      data.user_id,
+      data.tenant_id,
+    );
+    const { data: targetProfile, error: profileReadError } = await supabaseAdmin
+      .from("profiles")
+      .select("is_active")
+      .eq("id", data.user_id)
+      .eq("tenant_id", data.tenant_id)
+      .maybeSingle();
+    if (profileReadError) throw new Error(profileReadError.message);
+    if (!targetProfile) throw new Error("ملف المستخدم غير موجود داخل المؤسسة المحددة.");
+
+    // Change the Auth ban first; restore it if the profile write fails.
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: data.is_active ? "none" : "876000h",
+    });
+    if (authErr) throw new Error(authErr.message);
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ is_active: data.is_active })
+      .eq("id", data.user_id)
+      .eq("tenant_id", data.tenant_id);
+    if (error) {
+      await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+        ban_duration: targetProfile.is_active ? "none" : "876000h",
+      });
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+/**
+ * Transfer a user's role assignment to a different branch of the same tenant.
+ */
+export const transferUserToBranch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        user_role_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+        branch_id: z.string().uuid().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPermission(context.supabase, context.userId, data.tenant_id, "users.change_branch");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleTarget, error: roleTargetError } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("id", data.user_role_id)
+      .eq("tenant_id", data.tenant_id)
+      .maybeSingle();
+    if (roleTargetError) throw new Error(roleTargetError.message);
+    if (!roleTarget) throw new Error("تعيين المستخدم غير موجود داخل المؤسسة المحددة.");
+    await assertTargetRoleManageable(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      roleTarget.user_id,
+      data.tenant_id,
+    );
+    const actorScope = await getActorCompanyScope(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      data.tenant_id,
+    );
+    await assertBranchInActorScope(supabaseAdmin, data.branch_id, data.tenant_id, actorScope);
+    const { error } = await supabaseAdmin.rpc("transfer_user_role_branch", {
+      _user_role_id: data.user_role_id,
+      _tenant_id: data.tenant_id,
+      _branch_id: data.branch_id,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Change a user's role in a tenant (replaces existing role rows for that tenant).
+ */
+export const changeUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+        role: ROLE_ENUM,
+        custom_role_id: z.string().uuid().optional().nullable(),
+        branch_id: z.string().uuid().optional().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertPermission(context.supabase, context.userId, data.tenant_id, "users.change_role");
+    await assertCanAssignRole(context.supabase, context.userId, data.tenant_id, data.role);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertTargetBelongsToTenant(supabaseAdmin, data.user_id, data.tenant_id);
+    await assertTargetRoleManageable(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      data.user_id,
+      data.tenant_id,
+    );
+    const actorScope = await getActorCompanyScope(
+      context.supabase,
+      supabaseAdmin,
+      context.userId,
+      data.tenant_id,
+    );
+    await assertBranchInActorScope(supabaseAdmin, data.branch_id, data.tenant_id, actorScope);
+    if (data.custom_role_id) {
+      if (data.role !== "waiter") throw new Error("الدور المخصص يستخدم مستوى أساس محدوداً.");
+      await assertPermission(context.supabase, context.userId, data.tenant_id, "roles.manage");
+      const { data: customRole, error: customRoleError } = await supabaseAdmin
+        .from("custom_roles")
+        .select("id")
+        .eq("id", data.custom_role_id)
+        .eq("tenant_id", data.tenant_id)
+        .maybeSingle();
+      if (customRoleError || !customRole)
+        throw new Error(customRoleError?.message ?? "الدور المخصص لا يتبع هذه المؤسسة.");
+      const { error } = await context.supabase.rpc("assign_custom_role_to_user", {
+        _user_id: data.user_id,
+        _tenant_id: data.tenant_id,
+        _custom_role_id: data.custom_role_id,
+        _branch_id: data.branch_id ?? null,
+        _actor_id: context.userId,
+      });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.rpc("replace_user_role_in_tenant", {
+        _user_id: data.user_id,
+        _tenant_id: data.tenant_id,
+        _role: data.role,
+        _branch_id: data.branch_id ?? null,
+        _actor_id: context.userId,
+      });
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+/**
+ * Update the caller's own profile (name, username, phone, avatar).
+ */
+export const updateMyProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        full_name: z.string().min(1).max(120).optional(),
+        username: z.string().min(2).max(60).optional().nullable(),
+        phone: z.string().max(30).optional().nullable(),
+        avatar_url: z
+          .string()
+          .max(2048)
+          .refine(
+            (value) => value.startsWith("private://") || z.string().url().safeParse(value).success,
+            "رابط الصورة غير صالح",
+          )
+          .optional()
+          .nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.avatar_url?.startsWith("private://")) {
+      const parts = data.avatar_url.slice("private://".length).split("/");
+      if (
+        parts.length !== 4 ||
+        !/^[0-9a-f-]{36}$/i.test(parts[0]) ||
+        parts[1] !== "profiles" ||
+        parts[2] !== context.userId ||
+        !/^[a-zA-Z0-9._-]+$/.test(parts[3])
+      ) {
+        throw new Error("لا يمكنك ربط ملف صورة تابع لمستخدم آخر");
+      }
+    }
+    const patch: {
+      full_name?: string;
+      username?: string | null;
+      phone?: string | null;
+      avatar_url?: string | null;
+    } = {};
+    if (data.full_name !== undefined) patch.full_name = data.full_name;
+    if (data.username !== undefined) patch.username = data.username;
+    if (data.phone !== undefined) patch.phone = data.phone;
+    if (data.avatar_url !== undefined) patch.avatar_url = data.avatar_url;
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const { data: updatedProfile, error } = await context.supabase
+      .from("profiles")
+      .update(patch)
+      .eq("id", context.userId)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updatedProfile) throw new Error("لم يتم تحديث الملف الشخصي؛ تحقق من حالة الحساب.");
+    return { ok: true };
+  });

@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "feature/**", "feat/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The repository-wide lint baseline currently contains thousands of
+      # pre-existing Prettier violations. Lint the changed server modules while
+      # TypeScript and CI checks cover the full project.
+      - name: Lint changed server modules
+        run: >-
+          bunx eslint
+          src/lib/users.functions.ts
+          src/lib/super-owner.functions.ts
+          src/lib/hr.functions.ts
+          src/lib/enterprise.functions.ts
+          src/lib/pos-access.functions.ts
+          --rule 'prettier/prettier: off'
+          --rule '@typescript-eslint/no-explicit-any: off'
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Tests
+        run: bun run test
+
+      - name: Production build
+        run: bun run build
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: v2.stable
+
+      - name: Start local Supabase
+        id: start-supabase
+        run: |
+          # Clear only this ephemeral CI project's leftover Supabase containers before retrying.
+          supabase stop --no-backup || true
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,edge-runtime,logflare,vector,inbucket; then
+              exit 0
+            fi
+            echo "Supabase startup attempt $attempt failed; cleaning up before retry."
+            supabase stop --no-backup || true
+            if [ "$attempt" -lt 3 ]; then sleep $((attempt * 15)); fi
+          done
+          echo "::error::Supabase local stack failed to start after 3 attempts."
+          exit 1
+
+      - name: Apply all migrations to a clean local database
+        run: supabase db reset --local
+
+      - name: Run PostgreSQL pgTAP acceptance checks
+        run: supabase test db
+
+      - name: Stop local Supabase
+        if: always() && steps.start-supabase.outcome == 'success'
+        run: supabase stop --no-backup
